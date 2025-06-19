@@ -37,9 +37,7 @@ def perform_eda(df, session_name, output_dir):
         # f.write("Performing feature engineering...\n")
         df['Duration_s'] = df['IO Time'] / 1_000_000_000  # Convert nanoseconds to seconds
         df['Throughput_MB_s'] = (df['IO Size'] / (1024 * 1024)) / (df['Duration_s'])
-        df['Throughput_GB_s'] = (df['IO Size'] / (1024**3)) / df['Duration_s']
         df.loc[(df['Duration_s'] == 0) | (df['Throughput_MB_s'] == np.inf), 'Throughput_MB_s'] = 0
-        df.loc[(df['Duration_s'] == 0) | (df['Throughput_GB_s'] == np.inf), 'Throughput_GB_s'] = 0
 
         # --- Initial Data Overview ---
         f.write("# Processed Data Overview\n\n")
@@ -153,7 +151,7 @@ def perform_eda(df, session_name, output_dir):
         f.write("# Generating Visualizations\n\n")
         
         # Key Metric Distributions
-        num_cols = ['IO Time', 'Disk SrvT', 'IO Size', 'Duration_s', 'Throughput_MB_s']
+        num_cols = ['IO Time', 'Disk SrvT', 'IO Size', 'Duration_s', 'Throughput_MB_s',  'QD/C']
         cat_cols = ['IO Type', 'Disk', 'Filename', 'Process Name']
 
         f.write("## Univariate Analysis\n\n")
@@ -375,14 +373,26 @@ if __name__ == "__main__":
         "the_last_of_us_part_i.parquet"
     ]
 
-    for file in files:
-        file_path = os.path.join(dataset_path, file)
-        if os.path.exists(file_path):
-            # Derive session_name from filename (remove .parquet and replace underscores with spaces)
-            session_name = file.replace(".parquet", "").replace("_", " ").title()
-            df = pd.read_parquet(file_path)
-            output_dir = os.path.join(output_path, session_name.replace(" ", "_"))
-            os.makedirs(output_dir, exist_ok=True)
-            perform_eda(df, session_name, output_dir)
-        else:
-            print(f"File not found: {file_path}")
+    # for file in files:
+    #     file_path = os.path.join(dataset_path, file)
+    #     if os.path.exists(file_path):
+    #         # Derive session_name from filename (remove .parquet and replace underscores with spaces)
+    #         session_name = file.replace(".parquet", "").replace("_", " ").title()
+    #         df = pd.read_parquet(file_path)
+    #         output_dir = os.path.join(output_path, session_name.replace(" ", "_"))
+    #         os.makedirs(output_dir, exist_ok=True)
+    #         perform_eda(df, session_name, output_dir)
+    #     else:
+    #         print(f"File not found: {file_path}")
+
+    file = "combined_deadlock.parquet"
+    file_path = os.path.join(dataset_path, file)
+    if os.path.exists(file_path):
+        # Derive session_name from filename (remove .parquet and replace underscores with spaces)
+        session_name = file.replace(".parquet", "").replace("_", " ").title()
+        df = pd.read_parquet(file_path)
+        output_dir = os.path.join(output_path, session_name.replace(" ", "_"))
+        os.makedirs(output_dir, exist_ok=True)
+        perform_eda(df, session_name, output_dir)
+    else:
+        print(f"File not found: {file_path}")
